@@ -31,3 +31,17 @@ update:
 	$(DOCKER_COMPOSE) up --build -d
 	$(DOCKER_COMPOSE) start
 
+lm-prepare:
+	docker buildx create --name openwebui-builder
+
+VERSION := $(shell git rev-parse --short HEAD)
+
+lm:
+	docker buildx build --builder openwebui-builder \
+	--platform linux/amd64,linux/arm64 \
+	-t registry.lazycat.cloud/open-webui:$(VERSION) \
+	-t registry.lazycat.cloud/open-webui:latest \
+	--push .
+
+lm-post:
+	docker buildx rm openwebui-builder
