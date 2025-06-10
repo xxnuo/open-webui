@@ -1430,8 +1430,8 @@ async def get_app_config(request: Request):
                     "enable_google_drive_integration": app.state.config.ENABLE_GOOGLE_DRIVE_INTEGRATION,
                     "enable_onedrive_integration": app.state.config.ENABLE_ONEDRIVE_INTEGRATION,
                 }
-                if user is not None
-                else {}
+                # if user is not None
+                # else {}
             ),
         },
         **(
