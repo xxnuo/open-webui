@@ -31,6 +31,8 @@ ARG BUILD_HASH
 
 WORKDIR /app
 
+RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories
+
 # to store git revision in build
 RUN apk add --no-cache git
 
@@ -187,5 +189,7 @@ USER $UID:$GID
 ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
+
+COPY sentence-transformers /builtin/sentence-transformers
 
 CMD [ "bash", "start.sh"]

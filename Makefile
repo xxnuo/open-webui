@@ -31,3 +31,90 @@ update:
 	$(DOCKER_COMPOSE) up --build -d
 	$(DOCKER_COMPOSE) start
 
+VERSION := $(shell git rev-parse --short HEAD)
+REMOTE := nvidia@gpu
+REMOTE_PATH := ~/work/open-webui
+DOCKER_REGISTRY := registry.lazycat.cloud/x/open-webui
+DOCKER_NAME := open-webui
+ENV_PROXY := http://wa.lan:7890
+
+build-multiarch:
+	docker buildx build \
+	--platform linux/amd64,linux/arm64 \
+	-t $(DOCKER_REGISTRY):$(VERSION) \
+	-t $(DOCKER_REGISTRY):latest \
+	--push .
+
+sync-from-arm:
+	rsync -arvzlt --delete --exclude-from=.rsyncignore $(REMOTE):$(REMOTE_PATH)/ ./
+
+sync-to-arm:
+	ssh -t $(REMOTE) "mkdir -p $(REMOTE_PATH)"
+	rsync -arvzlt --delete --exclude-from=.rsyncignore ./ $(REMOTE):$(REMOTE_PATH)
+
+sync-clean:
+	ssh -t $(REMOTE) "rm -rf $(REMOTE_PATH)"
+
+build: sync-to-arm
+	ssh -t $(REMOTE) "cd $(REMOTE_PATH) && \
+		docker build \
+		-f Dockerfile \
+		-t $(DOCKER_REGISTRY):$(VERSION) \
+		-t $(DOCKER_REGISTRY):latest \
+        --network host \
+        --build-arg "HTTP_PROXY=$(ENV_PROXY)" \
+        --build-arg "HTTPS_PROXY=$(ENV_PROXY)" \
+				--build-arg "ALL_PROXY=$(ENV_PROXY)" \
+        --build-arg "NO_PROXY=localhost,192.168.1.200,registry.lazycat.cloud" \
+		."
+
+build-amd:
+	docker build \
+		-f Dockerfile \
+		-t $(DOCKER_REGISTRY)-amd:$(VERSION) \
+		-t $(DOCKER_REGISTRY)-amd:latest \
+        --network host \
+        --build-arg "HTTP_PROXY=$(ENV_PROXY)" \
+        --build-arg "HTTPS_PROXY=$(ENV_PROXY)" \
+				--build-arg "ALL_PROXY=$(ENV_PROXY)" \
+        --build-arg "NO_PROXY=localhost,192.168.1.200,registry.lazycat.cloud" \
+		.
+
+test: build
+	ssh -t $(REMOTE) "cd $(REMOTE_PATH) && \
+		docker run -it --rm \
+		--name $(DOCKER_NAME) \
+		--network host \
+		$(DOCKER_REGISTRY):latest"
+
+test-amd:
+	docker compose -f compose.amd.yaml up
+
+inspect:
+	ssh -t $(REMOTE) "cd $(REMOTE_PATH) && \
+		docker run -it --rm \
+		--name $(DOCKER_NAME) \
+		--network host \
+		$(DOCKER_REGISTRY):latest \
+		bash"
+
+inspect-amd:
+	docker run -it --rm \
+		--name $(DOCKER_NAME) \
+		--network host \
+		$(DOCKER_REGISTRY)-amd:latest \
+		bash
+
+push:
+	ssh -t $(REMOTE) "cd $(REMOTE_PATH) && \
+		docker push $(DOCKER_REGISTRY):$(VERSION) && \
+		docker push $(DOCKER_REGISTRY):latest"
+
+push-amd: build-amd
+	docker push $(DOCKER_REGISTRY)-amd:$(VERSION) && \
+	docker push $(DOCKER_REGISTRY)-amd:latest
+
+prepare-amd:
+	curl -L -O http://dl.corp.linakesi.cn/lzc-ai/ipex/sentence-transformers.tar.zst
+	zstd -d sentence-transformers.tar.zst -c | tar -xvf -
+	rm sentence-transformers.tar.zst
