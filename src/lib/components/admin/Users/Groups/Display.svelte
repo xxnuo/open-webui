@@ -6,7 +6,7 @@
 	const i18n = getContext('i18n');
 
 	export let name = '';
-	export let color = '';
+	export const color = '';
 	export let description = '';
 </script>
 

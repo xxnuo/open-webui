@@ -50,8 +50,6 @@
 	let AzureOpenAIKey = '';
 	let AzureOpenAIVersion = '';
 
-	let OllamaUrl = '';
-	let OllamaKey = '';
 
 	let querySettings = {
 		template: '',
@@ -65,14 +63,6 @@
 
 	const embeddingModelUpdateHandler = async () => {
 		if (embeddingEngine === '' && embeddingModel.split('/').length - 1 > 1) {
-			toast.error(
-				$i18n.t(
-					'Model filesystem path detected. Model shortname is required for update, cannot continue.'
-				)
-			);
-			return;
-		}
-		if (embeddingEngine === 'ollama' && embeddingModel === '') {
 			toast.error(
 				$i18n.t(
 					'Model filesystem path detected. Model shortname is required for update, cannot continue.'
@@ -105,10 +95,6 @@
 			embedding_engine: embeddingEngine,
 			embedding_model: embeddingModel,
 			embedding_batch_size: embeddingBatchSize,
-			ollama_config: {
-				key: OllamaKey,
-				url: OllamaUrl
-			},
 			openai_config: {
 				key: OpenAIKey,
 				url: OpenAIUrl
@@ -207,15 +193,6 @@
 			return;
 		}
 
-		if (
-			RAGConfig.CONTENT_EXTRACTION_ENGINE === 'mineru' &&
-			RAGConfig.MINERU_API_MODE === 'cloud' &&
-			RAGConfig.MINERU_API_KEY === ''
-		) {
-			toast.error($i18n.t('MinerU API Key required for Cloud API mode.'));
-			return;
-		}
-
 		if (!RAGConfig.BYPASS_EMBEDDING_AND_RETRIEVAL) {
 			await embeddingModelUpdateHandler();
 		}
@@ -243,9 +220,6 @@
 
 			OpenAIKey = embeddingConfig.openai_config.key;
 			OpenAIUrl = embeddingConfig.openai_config.url;
-
-			OllamaKey = embeddingConfig.ollama_config.key;
-			OllamaUrl = embeddingConfig.ollama_config.url;
 
 			AzureOpenAIKey = embeddingConfig.azure_openai_config.key;
 			AzureOpenAIUrl = embeddingConfig.azure_openai_config.url;
@@ -346,7 +320,6 @@
 									<option value="datalab_marker">{$i18n.t('Datalab Marker API')}</option>
 									<option value="document_intelligence">{$i18n.t('Document Intelligence')}</option>
 									<option value="mistral_ocr">{$i18n.t('Mistral OCR')}</option>
-									<option value="mineru">{$i18n.t('MinerU')}</option>
 								</select>
 							</div>
 						</div>
@@ -724,21 +697,6 @@
 									</div>
 								{/if}
 							{/if}
-
-							<div class="flex justify-between w-full mt-2">
-								<div class="self-center text-xs font-medium">
-									<Tooltip content={''} placement="top-start">
-										{$i18n.t('Parameters')}
-									</Tooltip>
-								</div>
-								<div class="">
-									<Textarea
-										bind:value={RAGConfig.DOCLING_PARAMETERS}
-										placeholder={$i18n.t('Enter additional parameters in JSON format')}
-										minSize={100}
-									/>
-								</div>
-							</div>
 						{:else if RAGConfig.CONTENT_EXTRACTION_ENGINE === 'document_intelligence'}
 							<div class="my-0.5 flex gap-2 pr-2">
 								<input
@@ -758,92 +716,6 @@
 									placeholder={$i18n.t('Enter Mistral API Key')}
 									bind:value={RAGConfig.MISTRAL_OCR_API_KEY}
 								/>
-							</div>
-						{:else if RAGConfig.CONTENT_EXTRACTION_ENGINE === 'mineru'}
-							<!-- API Mode Selection -->
-							<div class="flex w-full mt-2">
-								<div class="flex-1 flex justify-between">
-									<div class="self-center text-xs font-medium">
-										{$i18n.t('API Mode')}
-									</div>
-									<select
-										class="dark:bg-gray-900 w-fit pr-8 rounded-sm px-2 text-xs bg-transparent outline-hidden"
-										bind:value={RAGConfig.MINERU_API_MODE}
-										on:change={() => {
-											// Auto-update URL when switching modes if it's empty or matches the opposite mode's default
-											const cloudUrl = 'https://mineru.net/api/v4';
-											const localUrl = 'http://localhost:8000';
-
-											if (RAGConfig.MINERU_API_MODE === 'cloud') {
-												if (!RAGConfig.MINERU_API_URL || RAGConfig.MINERU_API_URL === localUrl) {
-													RAGConfig.MINERU_API_URL = cloudUrl;
-												}
-											} else {
-												if (!RAGConfig.MINERU_API_URL || RAGConfig.MINERU_API_URL === cloudUrl) {
-													RAGConfig.MINERU_API_URL = localUrl;
-												}
-											}
-										}}
-									>
-										<option value="local">{$i18n.t('Self-Hosted')}</option>
-										<option value="cloud">{$i18n.t('minerU managed (Cloud API)')}</option>
-									</select>
-								</div>
-							</div>
-
-							<!-- API URL -->
-							<div class="flex w-full mt-2">
-								<input
-									class="flex-1 w-full text-sm bg-transparent outline-hidden"
-									placeholder={RAGConfig.MINERU_API_MODE === 'cloud'
-										? $i18n.t('https://mineru.net/api/v4')
-										: $i18n.t('http://localhost:8000')}
-									bind:value={RAGConfig.MINERU_API_URL}
-								/>
-							</div>
-
-							<!-- API Key (Cloud only) -->
-							{#if RAGConfig.MINERU_API_MODE === 'cloud'}
-								<div class="flex w-full mt-2">
-									<SensitiveInput
-										placeholder={$i18n.t('Enter MinerU API Key')}
-										bind:value={RAGConfig.MINERU_API_KEY}
-									/>
-								</div>
-							{/if}
-
-							<!-- Parameters -->
-							<div class="flex justify-between w-full mt-2">
-								<div class="self-center text-xs font-medium">
-									<Tooltip
-										content={$i18n.t(
-											'Advanced parameters for MinerU parsing (enable_ocr, enable_formula, enable_table, language, model_version, page_ranges)'
-										)}
-										placement="top-start"
-									>
-										{$i18n.t('Parameters')}
-									</Tooltip>
-								</div>
-								<div class="">
-									<Textarea
-										value={typeof RAGConfig.MINERU_PARAMS === 'object' &&
-										RAGConfig.MINERU_PARAMS !== null &&
-										Object.keys(RAGConfig.MINERU_PARAMS).length > 0
-											? JSON.stringify(RAGConfig.MINERU_PARAMS, null, 2)
-											: ''}
-										on:input={(e) => {
-											try {
-												const value = e.target.value.trim();
-												RAGConfig.MINERU_PARAMS = value ? JSON.parse(value) : {};
-											} catch (err) {
-												// Keep the string value if JSON is invalid (user is still typing)
-												RAGConfig.MINERU_PARAMS = e.target.value;
-											}
-										}}
-										placeholder={`{\n  "enable_ocr": false,\n  "enable_formula": true,\n  "enable_table": true,\n  "language": "en",\n  "model_version": "pipeline",\n  "page_ranges": ""\n}`}
-										minSize={100}
-									/>
-								</div>
 							</div>
 						{/if}
 					</div>
@@ -940,9 +812,7 @@
 										bind:value={embeddingEngine}
 										placeholder={$i18n.t('Select an embedding model engine')}
 										on:change={(e) => {
-											if (e.target.value === 'ollama') {
-												embeddingModel = '';
-											} else if (e.target.value === 'openai') {
+											if (e.target.value === 'openai') {
 												embeddingModel = 'text-embedding-3-small';
 											} else if (e.target.value === 'azure_openai') {
 												embeddingModel = 'text-embedding-3-small';
@@ -952,7 +822,6 @@
 										}}
 									>
 										<option value="">{$i18n.t('Default (SentenceTransformers)')}</option>
-										<option value="ollama">{$i18n.t('Ollama')}</option>
 										<option value="openai">{$i18n.t('OpenAI')}</option>
 										<option value="azure_openai">{$i18n.t('Azure OpenAI')}</option>
 									</select>
@@ -971,21 +840,6 @@
 									<SensitiveInput
 										placeholder={$i18n.t('API Key')}
 										bind:value={OpenAIKey}
-										required={false}
-									/>
-								</div>
-							{:else if embeddingEngine === 'ollama'}
-								<div class="my-0.5 flex gap-2 pr-2">
-									<input
-										class="flex-1 w-full text-sm bg-transparent outline-hidden"
-										placeholder={$i18n.t('API Base URL')}
-										bind:value={OllamaUrl}
-										required
-									/>
-
-									<SensitiveInput
-										placeholder={$i18n.t('API Key')}
-										bind:value={OllamaKey}
 										required={false}
 									/>
 								</div>
@@ -1016,70 +870,57 @@
 							<div class=" mb-1 text-xs font-medium">{$i18n.t('Embedding Model')}</div>
 
 							<div class="">
-								{#if embeddingEngine === 'ollama'}
-									<div class="flex w-full">
-										<div class="flex-1 mr-2">
-											<input
-												class="flex-1 w-full text-sm bg-transparent outline-hidden"
-												bind:value={embeddingModel}
-												placeholder={$i18n.t('Set embedding model')}
-												required
-											/>
-										</div>
+								<div class="flex w-full">
+									<div class="flex-1 mr-2">
+										<input
+											class="flex-1 w-full text-sm bg-transparent outline-hidden"
+											placeholder={$i18n.t('Set embedding model (e.g. {{model}})', {
+												model: embeddingModel.slice(-40)
+											})}
+											bind:value={embeddingModel}
+										/>
 									</div>
-								{:else}
-									<div class="flex w-full">
-										<div class="flex-1 mr-2">
-											<input
-												class="flex-1 w-full text-sm bg-transparent outline-hidden"
-												placeholder={$i18n.t('Set embedding model (e.g. {{model}})', {
-													model: embeddingModel.slice(-40)
-												})}
-												bind:value={embeddingModel}
-											/>
-										</div>
 
-										{#if embeddingEngine === ''}
-											<button
-												class="px-2.5 bg-transparent text-gray-800 dark:bg-transparent dark:text-gray-100 rounded-lg transition"
-												on:click={() => {
-													embeddingModelUpdateHandler();
-												}}
-												disabled={updateEmbeddingModelLoading}
-											>
-												{#if updateEmbeddingModelLoading}
-													<div class="self-center">
-														<Spinner />
-													</div>
-												{:else}
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														class="w-4 h-4"
-													>
-														<path
-															d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z"
-														/>
-														<path
-															d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z"
-														/>
-													</svg>
-												{/if}
-											</button>
-										{/if}
-									</div>
-								{/if}
+									{#if embeddingEngine === ''}
+										<button
+											class="px-2.5 bg-transparent text-gray-800 dark:bg-transparent dark:text-gray-100 rounded-lg transition"
+											on:click={() => {
+												embeddingModelUpdateHandler();
+											}}
+											disabled={updateEmbeddingModelLoading}
+										>
+											{#if updateEmbeddingModelLoading}
+												<div class="self-center">
+													<Spinner />
+												</div>
+											{:else}
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 16 16"
+													fill="currentColor"
+													class="w-4 h-4"
+												>
+													<path
+														d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z"
+													/>
+													<path
+														d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z"
+													/>
+												</svg>
+											{/if}
+										</button>
+									{/if}
+								</div>
 							</div>
 
 							<div class="mt-1 mb-1 text-xs text-gray-400 dark:text-gray-500">
 								{$i18n.t(
-									'After updating or changing the embedding model, you must reindex the knowledge base for the changes to take effect. You can do this using the "Reindex" button below.'
+									'Warning: If you update or change your embedding model, you will need to re-import all documents.'
 								)}
 							</div>
 						</div>
 
-						{#if embeddingEngine === 'ollama' || embeddingEngine === 'openai' || embeddingEngine === 'azure_openai'}
+						{#if embeddingEngine === 'openai' || embeddingEngine === 'azure_openai'}
 							<div class="  mb-2.5 flex w-full justify-between">
 								<div class=" self-center text-xs font-medium">
 									{$i18n.t('Embedding Batch Size')}

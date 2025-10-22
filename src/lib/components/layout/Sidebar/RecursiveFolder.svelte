@@ -40,7 +40,6 @@
 	import FolderMenu from './Folders/FolderMenu.svelte';
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 	import FolderModal from './Folders/FolderModal.svelte';
-	import Emoji from '$lib/components/common/Emoji.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 
 	export let folderRegistry = {};
@@ -246,12 +245,11 @@
 	};
 
 	onMount(async () => {
-		open = folders[folderId].is_expanded;
 		folderRegistry[folderId] = {
-			setFolderItems: () => {
-				setFolderItems();
-			}
+			setFolderItems: () => setFolderItems()
 		};
+
+		open = folders[folderId].is_expanded;
 		if (folderElement) {
 			folderElement.addEventListener('dragover', onDragOver);
 			folderElement.addEventListener('drop', onDrop);
@@ -336,7 +334,7 @@
 				});
 
 				if (folder) {
-					await selectedFolder.set(folder);
+					selectedFolder.set(folder);
 				}
 			}
 			dispatch('update');
@@ -377,7 +375,7 @@
 				});
 
 				if (folder) {
-					await selectedFolder.set(folder);
+					selectedFolder.set(folder);
 				}
 			}
 		} else {
@@ -385,9 +383,7 @@
 		}
 	};
 
-	$: if (open) {
-		setFolderItems();
-	}
+	$: setFolderItems(open);
 
 	const renameHandler = async () => {
 		console.log('Edit');
@@ -491,16 +487,16 @@
 					}
 
 					clickTimer = setTimeout(async () => {
+						await goto('/');
+
 						const folder = await getFolderById(localStorage.token, folderId).catch((error) => {
 							toast.error(`${error}`);
 							return null;
 						});
 
 						if (folder) {
-							await selectedFolder.set(folder);
+							selectedFolder.set(folder);
 						}
-
-						await goto('/');
 
 						if ($mobile) {
 							showSidebar.set(!$showSidebar);
@@ -521,27 +517,13 @@
 						isExpandedUpdateDebounceHandler();
 					}}
 				>
-					{#if folders[folderId]?.meta?.icon}
-						<div class="flex group-hover:hidden transition-all">
-							<Emoji className="size-3.5" shortCode={folders[folderId].meta.icon} />
-						</div>
-
-						<div class="hidden group-hover:flex transition-all p-[1px]">
-							{#if open}
-								<ChevronDown className=" size-3" strokeWidth="2.5" />
-							{:else}
-								<ChevronRight className=" size-3" strokeWidth="2.5" />
-							{/if}
-						</div>
-					{:else}
-						<div class="p-[1px]">
-							{#if open}
-								<ChevronDown className=" size-3" strokeWidth="2.5" />
-							{:else}
-								<ChevronRight className=" size-3" strokeWidth="2.5" />
-							{/if}
-						</div>
-					{/if}
+					<div class="p-[1px]">
+						{#if open}
+							<ChevronDown className=" size-3" strokeWidth="2.5" />
+						{:else}
+							<ChevronRight className=" size-3" strokeWidth="2.5" />
+						{/if}
+					</div>
 				</button>
 
 				<div class="translate-y-[0.5px] flex-1 justify-start text-start line-clamp-1">

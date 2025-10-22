@@ -83,9 +83,7 @@
 
 	// Admin - Show Update Available Toast
 	let showUpdateToast = true;
-	let showChangelog = true;
 
-	let showEmojiInCall = false;
 	let voiceInterruption = false;
 	let hapticFeedback = false;
 
@@ -191,9 +189,7 @@
 
 		showUsername = $settings?.showUsername ?? false;
 		showUpdateToast = $settings?.showUpdateToast ?? true;
-		showChangelog = $settings?.showChangelog ?? true;
 
-		showEmojiInCall = $settings?.showEmojiInCall ?? false;
 		voiceInterruption = $settings?.voiceInterruption ?? false;
 
 		displayMultiModelResponsesInTabs = $settings?.displayMultiModelResponsesInTabs ?? false;
@@ -459,25 +455,6 @@
 								bind:state={showUpdateToast}
 								on:change={() => {
 									saveSettings({ showUpdateToast });
-								}}
-							/>
-						</div>
-					</div>
-				</div>
-
-				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="whats-new-label" class=" self-center text-xs">
-							{$i18n.t(`Show "What's New" modal on login`)}
-						</div>
-
-						<div class="flex items-center gap-2 p-1">
-							<Switch
-								ariaLabelledbyId="whats-new-label"
-								tooltip={true}
-								bind:state={showChangelog}
-								on:change={() => {
-									saveSettings({ showChangelog });
 								}}
 							/>
 						</div>
@@ -903,9 +880,9 @@
 
 			<div>
 				<div class=" py-0.5 flex w-full justify-between">
-					<label id="floating-action-buttons-label" class=" self-center text-xs">
+					<div id="floating-action-buttons-label" class=" self-center text-xs">
 						{$i18n.t('Floating Quick Actions')}
-					</label>
+					</div>
 
 					<div class="flex items-center gap-3 p-1">
 						{#if showFloatingActionButtons}
@@ -1152,25 +1129,6 @@
 							bind:state={voiceInterruption}
 							on:change={() => {
 								saveSettings({ voiceInterruption });
-							}}
-						/>
-					</div>
-				</div>
-			</div>
-
-			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="display-emoji-label" class=" self-center text-xs">
-						{$i18n.t('Display Emoji in Call')}
-					</div>
-
-					<div class="flex items-center gap-2 p-1">
-						<Switch
-							ariaLabelledbyId="display-emoji-label"
-							tooltip={true}
-							bind:state={showEmojiInCall}
-							on:change={() => {
-								saveSettings({ showEmojiInCall });
 							}}
 						/>
 					</div>

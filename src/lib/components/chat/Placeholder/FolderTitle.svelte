@@ -11,7 +11,7 @@
 
 	import { selectedFolder } from '$lib/stores';
 
-	import { deleteFolderById, getFolderById, updateFolderById } from '$lib/apis/folders';
+	import { deleteFolderById, updateFolderById } from '$lib/apis/folders';
 	import { getChatsByFolderId } from '$lib/apis/chats';
 
 	import FolderModal from '$lib/components/layout/Sidebar/Folders/FolderModal.svelte';
@@ -21,8 +21,6 @@
 	import FolderMenu from '$lib/components/layout/Sidebar/Folders/FolderMenu.svelte';
 	import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
-	import Emoji from '$lib/components/common/Emoji.svelte';
-	import EmojiPicker from '$lib/components/common/EmojiPicker.svelte';
 
 	export let folder = null;
 
@@ -61,39 +59,8 @@
 			}
 
 			toast.success($i18n.t('Folder updated successfully'));
-
-			const _folder = await getFolderById(localStorage.token, folder.id).catch((error) => {
-				toast.error(`${error}`);
-				return null;
-			});
-
-			await selectedFolder.set(_folder);
-			onUpdate(_folder);
-		}
-	};
-
-	const updateIconHandler = async (iconName) => {
-		const res = await updateFolderById(localStorage.token, folder.id, {
-			meta: {
-				icon: iconName
-			}
-		}).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		if (res) {
-			folder.meta = { ...folder.meta, icon: iconName };
-
-			toast.success($i18n.t('Folder updated successfully'));
-
-			const _folder = await getFolderById(localStorage.token, folder.id).catch((error) => {
-				toast.error(`${error}`);
-				return null;
-			});
-
-			await selectedFolder.set(_folder);
-			onUpdate(_folder);
+			selectedFolder.set(folder);
+			onUpdate(folder);
 		}
 	};
 
@@ -155,23 +122,11 @@
 
 	<div class="mb-3 px-6 @md:max-w-3xl justify-between w-full flex relative group items-center">
 		<div class="text-center flex gap-3.5 items-center">
-			<EmojiPicker
-				onClose={() => {}}
-				onSubmit={(name) => {
-					console.log(name);
-					updateIconHandler(name);
-				}}
+			<div
+				class=" rounded-full bg-gray-50 dark:bg-gray-800 size-11 flex justify-center items-center"
 			>
-				<button
-					class=" rounded-full bg-gray-50 dark:bg-gray-800 size-11 flex justify-center items-center"
-				>
-					{#if folder?.meta?.icon}
-						<Emoji className="size-6" shortCode={folder.meta.icon} />
-					{:else}
-						<Folder className="size-4.5" strokeWidth="2" />
-					{/if}
-				</button>
-			</EmojiPicker>
+				<Folder className="size-4.5" strokeWidth="2" />
+			</div>
 
 			<div class="text-3xl">
 				{folder.name}

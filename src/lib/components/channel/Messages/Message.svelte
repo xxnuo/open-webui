@@ -15,7 +15,7 @@
 
 	import { formatDate } from '$lib/utils';
 
-	import { settings, user, shortCodesToEmojis } from '$lib/stores';
+	import { settings, user } from '$lib/stores';
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
 	import Markdown from '$lib/components/chat/Messages/Markdown.svelte';
@@ -30,10 +30,7 @@
 	import FileItem from '$lib/components/common/FileItem.svelte';
 	import ProfilePreview from './Message/ProfilePreview.svelte';
 	import ChatBubbleOvalEllipsis from '$lib/components/icons/ChatBubble.svelte';
-	import FaceSmile from '$lib/components/icons/FaceSmile.svelte';
-	import EmojiPicker from '$lib/components/common/EmojiPicker.svelte';
 	import ChevronRight from '$lib/components/icons/ChevronRight.svelte';
-	import Emoji from '$lib/components/common/Emoji.svelte';
 	import Skeleton from '$lib/components/chat/Messages/Skeleton.svelte';
 	import ArrowUpLeftAlt from '$lib/components/icons/ArrowUpLeftAlt.svelte';
 
@@ -48,7 +45,6 @@
 	export let onEdit: Function = () => {};
 	export let onReply: Function = () => {};
 	export let onThread: Function = () => {};
-	export let onReaction: Function = () => {};
 
 	let showButtons = false;
 
@@ -85,25 +81,6 @@
 				<div
 					class="flex gap-1 rounded-lg bg-white dark:bg-gray-850 shadow-md p-0.5 border border-gray-100 dark:border-gray-850"
 				>
-					<EmojiPicker
-						onClose={() => (showButtons = false)}
-						onSubmit={(name) => {
-							showButtons = false;
-							onReaction(name);
-						}}
-					>
-						<Tooltip content={$i18n.t('Add Reaction')}>
-							<button
-								class="hover:bg-gray-100 dark:hover:bg-gray-800 transition rounded-lg p-1"
-								on:click={() => {
-									showButtons = true;
-								}}
-							>
-								<FaceSmile />
-							</button>
-						</Tooltip>
-					</EmojiPicker>
-
 					<Tooltip content={$i18n.t('Reply')}>
 						<button
 							class="hover:bg-gray-100 dark:hover:bg-gray-800 transition rounded-lg p-0.5"
@@ -348,48 +325,6 @@
 						{/if}
 					</div>
 
-					{#if (message?.reactions ?? []).length > 0}
-						<div>
-							<div class="flex items-center flex-wrap gap-y-1.5 gap-1 mt-1 mb-2">
-								{#each message.reactions as reaction}
-									<Tooltip content={`:${reaction.name}:`}>
-										<button
-											class="flex items-center gap-1.5 transition rounded-xl px-2 py-1 cursor-pointer {reaction.user_ids.includes(
-												$user?.id
-											)
-												? ' bg-blue-300/10 outline outline-blue-500/50 outline-1'
-												: 'bg-gray-300/10 dark:bg-gray-500/10 hover:outline hover:outline-gray-700/30 dark:hover:outline-gray-300/30 hover:outline-1'}"
-											on:click={() => {
-												onReaction(reaction.name);
-											}}
-										>
-											<Emoji shortCode={reaction.name} />
-
-											{#if reaction.user_ids.length > 0}
-												<div class="text-xs font-medium text-gray-500 dark:text-gray-400">
-													{reaction.user_ids?.length}
-												</div>
-											{/if}
-										</button>
-									</Tooltip>
-								{/each}
-
-								<EmojiPicker
-									onSubmit={(name) => {
-										onReaction(name);
-									}}
-								>
-									<Tooltip content={$i18n.t('Add Reaction')}>
-										<div
-											class="flex items-center gap-1.5 bg-gray-500/10 hover:outline hover:outline-gray-700/30 dark:hover:outline-gray-300/30 hover:outline-1 transition rounded-xl px-1 py-1 cursor-pointer text-gray-500 dark:text-gray-400"
-										>
-											<FaceSmile />
-										</div>
-									</Tooltip>
-								</EmojiPicker>
-							</div>
-						</div>
-					{/if}
 
 					{#if !thread && message.reply_count > 0}
 						<div class="flex items-center gap-1.5 -mt-0.5 mb-1.5">

@@ -11,7 +11,7 @@
 	export let show = false;
 
 	export let onImport = (e) => {};
-	export let onClose = () => {};
+	export const onClose = () => {};
 
 	export let loadUrlHandler: Function = () => {};
 	export let successMessage: string = '';

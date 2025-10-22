@@ -42,7 +42,6 @@
 
 	export let onShowValves: Function;
 	export let onClose: Function;
-	export let closeOnOutsideClick = true;
 
 	let show = false;
 	let tab = '';
@@ -94,7 +93,6 @@
 
 <Dropdown
 	bind:show
-	{closeOnOutsideClick}
 	on:change={(e) => {
 		if (e.detail === false) {
 			onClose();
@@ -332,7 +330,7 @@
 					{#each Object.keys(tools) as toolId}
 						<button
 							class="relative flex w-full justify-between gap-2 items-center px-3 py-1.5 text-sm cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50"
-							on:click={async (e) => {
+							on:click={(e) => {
 								if (!(tools[toolId]?.authenticated ?? true)) {
 									e.preventDefault();
 
@@ -340,18 +338,9 @@
 									let serverId = parts?.at(-1) ?? toolId;
 
 									const authUrl = getOAuthClientAuthorizationUrl(serverId, 'mcp');
-									window.open(authUrl, '_self', 'noopener');
+									window.open(authUrl, '_blank', 'noopener');
 								} else {
 									tools[toolId].enabled = !tools[toolId].enabled;
-
-									const state = tools[toolId].enabled;
-									await tick();
-
-									if (state) {
-										selectedToolIds = [...selectedToolIds, toolId];
-									} else {
-										selectedToolIds = selectedToolIds.filter((id) => id !== toolId);
-									}
 								}
 							}}
 						>
@@ -394,7 +383,18 @@
 							{/if}
 
 							<div class=" shrink-0">
-								<Switch state={tools[toolId].enabled} />
+								<Switch
+									state={tools[toolId].enabled}
+									on:change={async (e) => {
+										const state = e.detail;
+										await tick();
+										if (state) {
+											selectedToolIds = [...selectedToolIds, toolId];
+										} else {
+											selectedToolIds = selectedToolIds.filter((id) => id !== toolId);
+										}
+									}}
+								/>
 							</div>
 						</button>
 					{/each}

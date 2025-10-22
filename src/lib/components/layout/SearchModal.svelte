@@ -24,7 +24,7 @@
 
 	let actions = [
 		{
-			label: $i18n.t('Start a new conversation'),
+			label: 'Start a new conversation',
 			onClick: async () => {
 				await goto(`/${query ? `?q=${query}` : ''}`);
 				show = false;
@@ -231,7 +231,7 @@
 			($user?.role === 'admin' || ($user?.permissions?.features?.notes ?? true))
 				? [
 						{
-							label: $i18n.t('Create a new note'),
+							label: 'Create a new note',
 							onClick: async () => {
 								await goto(`/notes${query ? `?content=${query}` : ''}`);
 								show = false;

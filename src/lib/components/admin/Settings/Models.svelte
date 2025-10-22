@@ -347,9 +347,7 @@
 									content={marked.parse(
 										!!model?.meta?.description
 											? model?.meta?.description
-											: model?.ollama?.digest
-												? `${model?.ollama?.digest} **(${model?.ollama?.modified_at})**`
-												: model.id
+											: model.id
 									)}
 									className=" w-fit"
 									placement="top-start"
@@ -358,11 +356,7 @@
 								</Tooltip>
 								<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1 text-gray-500">
 									<span class=" line-clamp-1">
-										{!!model?.meta?.description
-											? model?.meta?.description
-											: model?.ollama?.digest
-												? `${model.id} (${model?.ollama?.digest})`
-												: model.id}
+										{!!model?.meta?.description ? model?.meta?.description : model.id}
 									</span>
 								</div>
 							</div>

@@ -38,7 +38,7 @@
 
 	const i18n = getContext('i18n');
 
-	export let shareEnabled: boolean = false;
+	export const shareEnabled: boolean = false;
 
 	export let shareHandler: Function;
 	export let moveChatHandler: Function;
@@ -232,7 +232,7 @@
 		if (chat.id) {
 			let chatObj = null;
 
-			if ((chat?.id ?? '').startsWith('local') || $temporaryChatEnabled) {
+			if (chat.id === 'local' || $temporaryChatEnabled) {
 				chatObj = chat;
 			} else {
 				chatObj = await getChatById(localStorage.token, chat.id);
@@ -431,9 +431,9 @@
 				<div class="flex items-center">{$i18n.t('Copy')}</div>
 			</DropdownMenu.Item>
 
-			{#if !$temporaryChatEnabled && chat?.id}
-				<hr class="border-gray-50 dark:border-gray-800 my-1" />
+			<hr class="border-gray-50 dark:border-gray-800 my-1" />
 
+			{#if chat?.id}
 				<DropdownMenu.Sub>
 					<DropdownMenu.SubTrigger
 						class="flex gap-2 items-center px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl select-none w-full"
@@ -461,17 +461,19 @@
 						{/each}
 					</DropdownMenu.SubContent>
 				</DropdownMenu.Sub>
+			{/if}
 
-				<DropdownMenu.Item
-					class="flex gap-2 items-center px-3 py-1.5 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
-					on:click={() => {
-						archiveChatHandler();
-					}}
-				>
-					<ArchiveBox className="size-4" strokeWidth="1.5" />
-					<div class="flex items-center">{$i18n.t('Archive')}</div>
-				</DropdownMenu.Item>
+			<DropdownMenu.Item
+				class="flex gap-2 items-center px-3 py-1.5 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
+				on:click={() => {
+					archiveChatHandler();
+				}}
+			>
+				<ArchiveBox className="size-4" strokeWidth="1.5" />
+				<div class="flex items-center">{$i18n.t('Archive')}</div>
+			</DropdownMenu.Item>
 
+			{#if !$temporaryChatEnabled}
 				<hr class="border-gray-50 dark:border-gray-800 my-1" />
 
 				<div class="flex p-1">

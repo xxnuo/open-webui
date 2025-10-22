@@ -8,7 +8,6 @@
 
 	import Modal from './Modal.svelte';
 	import XMark from '../icons/XMark.svelte';
-	import Info from '../icons/Info.svelte';
 	import Switch from './Switch.svelte';
 	import Tooltip from './Tooltip.svelte';
 	import dayjs from 'dayjs';
@@ -87,9 +86,8 @@
 			<div class="flex items-start justify-between">
 				<div>
 					<div class=" font-medium text-lg dark:text-gray-100">
-						<a
-							href="#"
-							class="hover:underline line-clamp-1"
+						<button
+							class="hover:underline line-clamp-1 text-left"
 							on:click|preventDefault={() => {
 								if (!isPDF && item.url) {
 									window.open(
@@ -100,7 +98,7 @@
 							}}
 						>
 							{item?.name ?? 'File'}
-						</a>
+						</button>
 					</div>
 				</div>
 

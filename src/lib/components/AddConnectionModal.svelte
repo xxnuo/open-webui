@@ -5,7 +5,6 @@
 
 	import { settings } from '$lib/stores';
 	import { verifyOpenAIConnection } from '$lib/apis/openai';
-	import { verifyOllamaConnection } from '$lib/apis/ollama';
 
 	import Modal from '$lib/components/common/Modal.svelte';
 	import Plus from '$lib/components/icons/Plus.svelte';
@@ -17,7 +16,6 @@
 	import Tags from './common/Tags.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import XMark from '$lib/components/icons/XMark.svelte';
-	import Textarea from './common/Textarea.svelte';
 
 	export let onSubmit: Function = () => {};
 	export let onDelete: Function = () => {};
@@ -25,7 +23,6 @@
 	export let show = false;
 	export let edit = false;
 
-	export let ollama = false;
 	export let direct = false;
 
 	export let connection = null;
@@ -43,8 +40,6 @@
 	let enable = true;
 	let apiVersion = '';
 
-	let headers = '';
-
 	let tags = [];
 
 	let modelId = '';
@@ -52,41 +47,9 @@
 
 	let loading = false;
 
-	const verifyOllamaHandler = async () => {
-		// remove trailing slash from url
-		url = url.replace(/\/$/, '');
-
-		const res = await verifyOllamaConnection(localStorage.token, {
-			url,
-			key
-		}).catch((error) => {
-			toast.error(`${error}`);
-		});
-
-		if (res) {
-			toast.success($i18n.t('Server connection verified'));
-		}
-	};
-
 	const verifyOpenAIHandler = async () => {
 		// remove trailing slash from url
 		url = url.replace(/\/$/, '');
-
-		let _headers = null;
-
-		if (headers) {
-			try {
-				_headers = JSON.parse(headers);
-				if (typeof _headers !== 'object' || Array.isArray(_headers)) {
-					_headers = null;
-					throw new Error('Headers must be a valid JSON object');
-				}
-				headers = JSON.stringify(_headers, null, 2);
-			} catch (error) {
-				toast.error($i18n.t('Headers must be a valid JSON object'));
-				return;
-			}
-		}
 
 		const res = await verifyOpenAIConnection(
 			localStorage.token,
@@ -96,8 +59,7 @@
 				config: {
 					auth_type,
 					azure: azure,
-					api_version: apiVersion,
-					...(_headers ? { headers: _headers } : {})
+					api_version: apiVersion
 				}
 			},
 			direct
@@ -111,11 +73,7 @@
 	};
 
 	const verifyHandler = () => {
-		if (ollama) {
-			verifyOllamaHandler();
-		} else {
-			verifyOpenAIHandler();
-		}
+		verifyOpenAIHandler();
 	};
 
 	const addModelHandler = () => {
@@ -128,7 +86,7 @@
 	const submitHandler = async () => {
 		loading = true;
 
-		if (!ollama && !url) {
+		if (!url) {
 			loading = false;
 			toast.error($i18n.t('URL is required'));
 			return;
@@ -156,19 +114,6 @@
 			}
 		}
 
-		if (headers) {
-			try {
-				const _headers = JSON.parse(headers);
-				if (typeof _headers !== 'object' || Array.isArray(_headers)) {
-					throw new Error('Headers must be a valid JSON object');
-				}
-				headers = JSON.stringify(_headers, null, 2);
-			} catch (error) {
-				toast.error($i18n.t('Headers must be a valid JSON object'));
-				return;
-			}
-		}
-
 		// remove trailing slash from url
 		url = url.replace(/\/$/, '');
 
@@ -182,8 +127,7 @@
 				model_ids: modelIds,
 				connection_type: connectionType,
 				auth_type,
-				headers: headers ? JSON.parse(headers) : undefined,
-				...(!ollama && azure ? { azure: true, api_version: apiVersion } : {})
+				...(azure ? { azure: true, api_version: apiVersion } : {})
 			}
 		};
 
@@ -206,22 +150,15 @@
 			key = connection.key;
 
 			auth_type = connection.config.auth_type ?? 'bearer';
-			headers = connection.config?.headers
-				? JSON.stringify(connection.config.headers, null, 2)
-				: '';
 
 			enable = connection.config?.enable ?? true;
 			tags = connection.config?.tags ?? [];
 			prefixId = connection.config?.prefix_id ?? '';
 			modelIds = connection.config?.model_ids ?? [];
 
-			if (ollama) {
-				connectionType = connection.config?.connection_type ?? 'local';
-			} else {
-				connectionType = connection.config?.connection_type ?? 'external';
-				azure = connection.config?.azure ?? false;
-				apiVersion = connection.config?.api_version ?? '';
-			}
+			connectionType = connection.config?.connection_type ?? 'external';
+			azure = connection.config?.azure ?? false;
+			apiVersion = connection.config?.api_version ?? '';
 		}
 	};
 
@@ -363,14 +300,11 @@
 										>
 											<option value="none">{$i18n.t('None')}</option>
 											<option value="bearer">{$i18n.t('Bearer')}</option>
-
-											{#if !ollama}
-												<option value="session">{$i18n.t('Session')}</option>
-												{#if !direct}
-													<option value="system_oauth">{$i18n.t('OAuth')}</option>
-													{#if azure}
-														<option value="microsoft_entra_id">{$i18n.t('Entra ID')}</option>
-													{/if}
+											<option value="session">{$i18n.t('Session')}</option>
+											{#if !direct}
+												<option value="system_oauth">{$i18n.t('OAuth')}</option>
+												{#if azure}
+													<option value="microsoft_entra_id">{$i18n.t('Entra ID')}</option>
 												{/if}
 											{/if}
 										</select>
@@ -413,35 +347,6 @@
 							</div>
 						</div>
 
-						{#if !ollama && !direct}
-							<div class="flex gap-2 mt-2">
-								<div class="flex flex-col w-full">
-									<label
-										for="headers-input"
-										class={`mb-0.5 text-xs text-gray-500
-								${($settings?.highContrastMode ?? false) ? 'text-gray-800 dark:text-gray-100' : ''}`}
-										>{$i18n.t('Headers')}</label
-									>
-
-									<div class="flex-1">
-										<Tooltip
-											content={$i18n.t(
-												'Enter additional headers in JSON format (e.g. {{\'{{"X-Custom-Header": "value"}}\'}})'
-											)}
-										>
-											<Textarea
-												className="w-full text-sm outline-hidden"
-												bind:value={headers}
-												placeholder={$i18n.t('Enter additional headers in JSON format')}
-												required={false}
-												minSize={30}
-											/>
-										</Tooltip>
-									</div>
-								</div>
-							</div>
-						{/if}
-
 						<div class="flex gap-2 mt-2">
 							<div class="flex flex-col w-full">
 								<label
@@ -470,7 +375,7 @@
 							</div>
 						</div>
 
-						{#if !ollama && !direct}
+						{#if !direct}
 							<div class="flex flex-row justify-between items-center w-full mt-2">
 								<label
 									for="prefix-id-input"
@@ -556,15 +461,8 @@
 									class={`text-gray-500 text-xs text-center py-2 px-10
 								${($settings?.highContrastMode ?? false) ? 'text-gray-800 dark:text-gray-100' : ''}`}
 								>
-									{#if ollama}
-										{$i18n.t('Leave empty to include all models from "{{url}}/api/tags" endpoint', {
-											url: url
-										})}
-									{:else if azure}
+									{#if azure}
 										{$i18n.t('Deployment names are required for Azure OpenAI')}
-										<!-- {$i18n.t('Leave empty to include all models from "{{url}}" endpoint', {
-											url: `${url}/openai/deployments`
-										})} -->
 									{:else}
 										{$i18n.t('Leave empty to include all models from "{{url}}/models" endpoint', {
 											url: url

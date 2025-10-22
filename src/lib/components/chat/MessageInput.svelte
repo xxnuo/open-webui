@@ -117,11 +117,6 @@
 	let showValvesModal = false;
 	let selectedValvesType = 'tool'; // 'tool' or 'function'
 	let selectedValvesItemId = null;
-	let integrationsMenuCloseOnOutsideClick = true;
-
-	$: if (!showValvesModal) {
-		integrationsMenuCloseOnOutsideClick = true;
-	}
 
 	$: onChange({
 		prompt,
@@ -890,6 +885,8 @@
 				})
 			}
 		];
+
+		console.log(suggestions);
 		loaded = true;
 
 		window.setTimeout(() => {
@@ -948,9 +945,6 @@
 	id={selectedValvesItemId ?? null}
 	on:save={async () => {
 		await tick();
-	}}
-	on:close={() => {
-		integrationsMenuCloseOnOutsideClick = true;
 	}}
 />
 
@@ -1068,9 +1062,7 @@
 													class="size-3.5 max-w-[28px] object-cover rounded-full"
 													src={$models.find((model) => model.id === atSelectedModel.id)?.info?.meta
 														?.profile_image_url ??
-														($i18n.language === 'dg-DG'
-															? `${WEBUI_BASE_URL}/doge.png`
-															: `${WEBUI_BASE_URL}/static/favicon.png`)}
+														`${WEBUI_BASE_URL}/static/favicon.png`}
 												/>
 												<div class="translate-y-[0.5px]">
 													<span class="">{atSelectedModel.name}</span>
@@ -1207,12 +1199,12 @@
 														floatingMenuPlacement={'top-start'}
 														insertPromptAsRichText={$settings?.insertPromptAsRichText ?? false}
 														shiftEnter={!($settings?.ctrlEnterToSend ?? false) &&
-															!$mobile &&
-															!(
-																'ontouchstart' in window ||
-																navigator.maxTouchPoints > 0 ||
-																navigator.msMaxTouchPoints > 0
-															)}
+															(!$mobile ||
+																!(
+																	'ontouchstart' in window ||
+																	navigator.maxTouchPoints > 0 ||
+																	navigator.msMaxTouchPoints > 0
+																))}
 														placeholder={placeholder ? placeholder : $i18n.t('Send a Message')}
 														largeTextAsFile={($settings?.largeTextAsFile ?? false) && !shiftKey}
 														autocomplete={$config?.features?.enable_autocomplete_generation &&
@@ -1471,13 +1463,11 @@
 												bind:webSearchEnabled
 												bind:imageGenerationEnabled
 												bind:codeInterpreterEnabled
-												closeOnOutsideClick={integrationsMenuCloseOnOutsideClick}
 												onShowValves={(e) => {
 													const { type, id } = e;
 													selectedValvesType = type;
 													selectedValvesItemId = id;
 													showValvesModal = true;
-													integrationsMenuCloseOnOutsideClick = false;
 												}}
 												onClose={async () => {
 													await tick();

@@ -160,7 +160,7 @@
 	};
 
 	const onChange = async () => {
-		$socket?.emit('events:channel', {
+		$socket?.emit('channel-events', {
 			channel_id: id,
 			message_id: null,
 			data: {
@@ -180,7 +180,14 @@
 			chatId.set('');
 		}
 
-		$socket?.on('events:channel', channelEventHandler);
+		$socket?.on('channel-events', channelEventHandler);
+
+		// Join the channel room for real-time updates
+		if ($socket && id) {
+			$socket.emit('channel:join', {
+				channel_id: id
+			});
+		}
 
 		mediaQuery = window.matchMedia('(min-width: 1024px)');
 
@@ -197,7 +204,14 @@
 	});
 
 	onDestroy(() => {
-		$socket?.off('events:channel', channelEventHandler);
+		$socket?.off('channel-events', channelEventHandler);
+		
+		// Leave the channel room when component is destroyed
+		if ($socket && id) {
+			$socket.emit('channel:leave', {
+				channel_id: id
+			});
+		}
 	});
 </script>
 

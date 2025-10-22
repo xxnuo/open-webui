@@ -13,14 +13,9 @@
 			class="pointer-events-auto z-20 flex justify-between items-center py-3 px-2 font-primar text-gray-900 dark:text-white"
 		>
 			<div class="flex-1 flex items-center justify-between pl-2">
-				<a
-					class="flex items-center space-x-2 hover:underline"
-					href={$embed?.url}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
+				<div class="flex items-center space-x-2">
 					{$embed?.title ?? 'Embedded Content'}
-				</a>
+				</div>
 			</div>
 
 			<button

@@ -12,8 +12,6 @@
 	export let profileImageUrl;
 	export let user = null;
 
-	export let imageClassName = 'size-14 md:size-18';
-
 	let profileImageInputElement;
 </script>
 
@@ -91,7 +89,7 @@
 			<img
 				src={profileImageUrl !== '' ? profileImageUrl : generateInitialsImage(user?.name)}
 				alt="profile"
-				class=" rounded-full {imageClassName} object-cover"
+				class=" rounded-full size-14 md:size-18 object-cover"
 			/>
 
 			<div class="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition">

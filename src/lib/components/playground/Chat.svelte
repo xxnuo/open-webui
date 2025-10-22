@@ -5,7 +5,6 @@
 	import { onMount, tick, getContext } from 'svelte';
 
 	import {
-		OLLAMA_API_BASE_URL,
 		OPENAI_API_BASE_URL,
 		WEBUI_API_BASE_URL,
 		WEBUI_BASE_URL

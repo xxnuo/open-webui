@@ -17,7 +17,7 @@
 	import AddToolServerModal from '$lib/components/AddToolServerModal.svelte';
 	import { getToolServerConnections, setToolServerConnections } from '$lib/apis/configs';
 
-	export let saveSettings: Function;
+	export const saveSettings: Function = () => {};
 
 	let servers = null;
 	let showConnectionModal = false;
@@ -83,7 +83,7 @@
 							</Tooltip>
 						</div>
 
-						<div class="flex flex-col gap-1">
+						<div class="flex flex-col gap-1.5">
 							{#each servers as server, idx}
 								<Connection
 									bind:connection={server}

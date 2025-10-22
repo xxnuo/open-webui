@@ -57,11 +57,7 @@
 
 	$: if (show && modalElement) {
 		document.body.appendChild(modalElement);
-		focusTrap = FocusTrap.createFocusTrap(modalElement, {
-			allowOutsideClick: (e) => {
-				return e.target.closest('[data-sonner-toast]') !== null;
-			}
-		});
+		focusTrap = FocusTrap.createFocusTrap(modalElement);
 		focusTrap.activate();
 		window.addEventListener('keydown', handleKeyDown);
 		document.body.style.overflow = 'hidden';

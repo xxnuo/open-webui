@@ -34,7 +34,6 @@
 		banners,
 		showSettings,
 		showShortcuts,
-		showChangelog,
 		temporaryChatEnabled,
 		toolServers,
 		showSearch,
@@ -43,7 +42,6 @@
 
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
-	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
@@ -56,114 +54,78 @@
 
 	let version;
 
-	const clearChatInputStorage = () => {
-		const chatInputKeys = Object.keys(localStorage).filter((key) => key.startsWith('chat-input'));
-		if (chatInputKeys.length > 0) {
-			chatInputKeys.forEach((key) => {
-				localStorage.removeItem(key);
-			});
-		}
-	};
-
-	const checkLocalDBChats = async () => {
-		try {
-			// Check if IndexedDB exists
-			DB = await openDB('Chats', 1);
-
-			if (!DB) {
-				return;
-			}
-
-			const chats = await DB.getAllFromIndex('chats', 'timestamp');
-			localDBChats = chats.map((item, idx) => chats[chats.length - 1 - idx]);
-
-			if (localDBChats.length === 0) {
-				await deleteDB('Chats');
-			}
-		} catch (error) {
-			// IndexedDB Not Found
-		}
-	};
-
-	const setUserSettings = async (cb: () => Promise<void>) => {
-		let userSettings = await getUserSettings(localStorage.token).catch((error) => {
-			console.error(error);
-			return null;
-		});
-
-		if (!userSettings) {
-			try {
-				userSettings = JSON.parse(localStorage.getItem('settings') ?? '{}');
-			} catch (e: unknown) {
-				console.error('Failed to parse settings from localStorage', e);
-				userSettings = {};
-			}
-		}
-
-		if (userSettings?.ui) {
-			settings.set(userSettings.ui);
-		}
-
-		if (cb) {
-			await cb();
-		}
-	};
-
-	const setModels = async () => {
-		models.set(
-			await getModels(
-				localStorage.token,
-				$config?.features?.enable_direct_connections ? ($settings?.directConnections ?? null) : null
-			)
-		);
-	};
-
-	const setToolServers = async () => {
-		let toolServersData = await getToolServersData($settings?.toolServers ?? []);
-		toolServersData = toolServersData.filter((data) => {
-			if (!data || data.error) {
-				toast.error(
-					$i18n.t(`Failed to connect to {{URL}} OpenAPI tool server`, {
-						URL: data?.url
-					})
-				);
-				return false;
-			}
-			return true;
-		});
-		toolServers.set(toolServersData);
-	};
-
-	const setBanners = async () => {
-		const bannersData = await getBanners(localStorage.token);
-		banners.set(bannersData);
-	};
-
-	const setTools = async () => {
-		const toolsData = await getTools(localStorage.token);
-		tools.set(toolsData);
-	};
-
 	onMount(async () => {
 		if ($user === undefined || $user === null) {
 			await goto('/auth');
-			return;
-		}
-		if (!['user', 'admin'].includes($user?.role)) {
-			return;
-		}
+		} else if (['user', 'admin'].includes($user?.role)) {
+			try {
+				// Check if IndexedDB exists
+				DB = await openDB('Chats', 1);
 
-		clearChatInputStorage();
-		await Promise.all([
-			checkLocalDBChats(),
-			setBanners(),
-			setTools(),
-			setUserSettings(async () => {
-				await Promise.all([setModels(), setToolServers()]);
-			})
-		]);
+				if (DB) {
+					const chats = await DB.getAllFromIndex('chats', 'timestamp');
+					localDBChats = chats.map((item, idx) => chats[chats.length - 1 - idx]);
 
-		const setupKeyboardShortcuts = () => {
+					if (localDBChats.length === 0) {
+						await deleteDB('Chats');
+					}
+				}
+
+				console.log(DB);
+			} catch (error) {
+				// IndexedDB Not Found
+			}
+
+			const chatInputKeys = Object.keys(localStorage).filter((key) => key.startsWith('chat-input'));
+			if (chatInputKeys.length > 0) {
+				chatInputKeys.forEach((key) => {
+					localStorage.removeItem(key);
+				});
+			}
+
+			const userSettings = await getUserSettings(localStorage.token).catch((error) => {
+				console.error(error);
+				return null;
+			});
+
+			if (userSettings) {
+				settings.set(userSettings.ui);
+			} else {
+				let localStorageSettings = {} as Parameters<(typeof settings)['set']>[0];
+
+				try {
+					localStorageSettings = JSON.parse(localStorage.getItem('settings') ?? '{}');
+				} catch (e: unknown) {
+					console.error('Failed to parse settings from localStorage', e);
+				}
+
+				settings.set(localStorageSettings);
+			}
+
+			models.set(
+				await getModels(
+					localStorage.token,
+					$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+				)
+			);
+
+			banners.set(await getBanners(localStorage.token));
+			tools.set(await getTools(localStorage.token));
+
+			let toolServersData = await getToolServersData($settings?.toolServers ?? []);
+			toolServersData = toolServersData.filter((data) => {
+				if (data.error) {
+					toast.error(
+						$i18n.t(`Failed to connect to {{URL}} OpenAPI tool server`, {
+							URL: data?.url
+						})
+					);
+					return false;
+				}
+				return true;
+			});
+			toolServers.set(toolServersData);
+
 			document.addEventListener('keydown', async function (event) {
 				const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey is for Cmd key on Mac
 				// Check if the Shift key is pressed
@@ -261,38 +223,33 @@
 					}, 0);
 				}
 			});
-		};
-		setupKeyboardShortcuts();
 
-		if ($user?.role === 'admin' && ($settings?.showChangelog ?? true)) {
-			showChangelog.set($settings?.version !== $config.version);
-		}
+			if ($user?.role === 'admin' || ($user?.permissions?.chat?.temporary ?? true)) {
+				if ($page.url.searchParams.get('temporary-chat') === 'true') {
+					temporaryChatEnabled.set(true);
+				}
 
-		if ($user?.role === 'admin' || ($user?.permissions?.chat?.temporary ?? true)) {
-			if ($page.url.searchParams.get('temporary-chat') === 'true') {
-				temporaryChatEnabled.set(true);
+				if ($user?.role !== 'admin' && $user?.permissions?.chat?.temporary_enforced) {
+					temporaryChatEnabled.set(true);
+				}
 			}
 
-			if ($user?.role !== 'admin' && $user?.permissions?.chat?.temporary_enforced) {
-				temporaryChatEnabled.set(true);
-			}
-		}
+			// Check for version updates
+			if ($user?.role === 'admin' && $config?.features?.enable_version_update_check) {
+				// Check if the user has dismissed the update toast in the last 24 hours
+				if (localStorage.dismissedUpdateToast) {
+					const dismissedUpdateToast = new Date(Number(localStorage.dismissedUpdateToast));
+					const now = new Date();
 
-		// Check for version updates
-		if ($user?.role === 'admin' && $config?.features?.enable_version_update_check) {
-			// Check if the user has dismissed the update toast in the last 24 hours
-			if (localStorage.dismissedUpdateToast) {
-				const dismissedUpdateToast = new Date(Number(localStorage.dismissedUpdateToast));
-				const now = new Date();
-
-				if (now - dismissedUpdateToast > 24 * 60 * 60 * 1000) {
+					if (now - dismissedUpdateToast > 24 * 60 * 60 * 1000) {
+						checkForVersionUpdates();
+					}
+				} else {
 					checkForVersionUpdates();
 				}
-			} else {
-				checkForVersionUpdates();
 			}
+			await tick();
 		}
-		await tick();
 
 		loaded = true;
 	});
@@ -308,7 +265,6 @@
 </script>
 
 <SettingsModal bind:show={$showSettings} />
-<ChangelogModal bind:show={$showChangelog} />
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>

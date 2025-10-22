@@ -19,7 +19,7 @@
 
 	const i18n = getContext('i18n');
 
-	export let user;
+	export const user = undefined;
 	export let model;
 
 	export let shareHandler: Function;
@@ -43,14 +43,7 @@
 	}}
 >
 	<Tooltip content={$i18n.t('More')}>
-		<button
-			on:click={(e) => {
-				e.stopPropagation();
-				show = !show;
-			}}
-		>
-			<slot />
-		</button>
+		<slot />
 	</Tooltip>
 
 	<div slot="content">

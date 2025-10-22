@@ -43,7 +43,7 @@
 
 	export let placeholder = $i18n.t('Type here...');
 
-	export let id = null;
+	export const id = null;
 	export let chatInputElement;
 
 	export let typingUsers = [];
@@ -58,7 +58,7 @@
 
 	export let disabled = false;
 	export let acceptFiles = true;
-	export let showFormattingToolbar = true;
+	export const showFormattingToolbar = true;
 
 	export let userSuggestions = false;
 	export let channelSuggestions = false;
@@ -876,12 +876,12 @@
 											richText={$settings?.richTextInput ?? true}
 											showFormattingToolbar={$settings?.showFormattingToolbar ?? false}
 											shiftEnter={!($settings?.ctrlEnterToSend ?? false) &&
-												!$mobile &&
-												!(
-													'ontouchstart' in window ||
-													navigator.maxTouchPoints > 0 ||
-													navigator.msMaxTouchPoints > 0
-												)}
+												(!$mobile ||
+													!(
+														'ontouchstart' in window ||
+														navigator.maxTouchPoints > 0 ||
+														navigator.msMaxTouchPoints > 0
+													))}
 											largeTextAsFile={$settings?.largeTextAsFile ?? false}
 											floatingMenuPlacement={'top-start'}
 											{suggestions}

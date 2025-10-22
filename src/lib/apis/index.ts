@@ -494,10 +494,7 @@ export const executeToolServer = async (
 			headers
 		};
 
-		if (
-			['post', 'put', 'patch', 'delete'].includes(httpMethod.toLowerCase()) &&
-			operation.requestBody
-		) {
+		if (['post', 'put', 'patch'].includes(httpMethod.toLowerCase()) && operation.requestBody) {
 			requestOptions.body = JSON.stringify(bodyParams);
 		}
 
@@ -804,54 +801,6 @@ export const generateTags = async (
 		console.error('Failed to parse response: ', e);
 		return [];
 	}
-};
-
-export const generateEmoji = async (
-	token: string = '',
-	model: string,
-	prompt: string,
-	chat_id?: string
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/emoji/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			prompt: prompt,
-			...(chat_id && { chat_id: chat_id })
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	const response = res?.choices[0]?.message?.content.replace(/["']/g, '') ?? null;
-
-	if (response) {
-		if (/\p{Extended_Pictographic}/u.test(response)) {
-			return response.match(/\p{Extended_Pictographic}/gu)[0];
-		}
-	}
-
-	return null;
 };
 
 export const generateQueries = async (
@@ -1354,32 +1303,6 @@ export const getBackendConfig = async () => {
 	const res = await fetch(`${WEBUI_BASE_URL}/api/config`, {
 		method: 'GET',
 		credentials: 'include',
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getChangelog = async () => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/changelog`, {
-		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json'
 		}

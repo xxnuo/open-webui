@@ -17,9 +17,7 @@
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
-	import OnBoarding from '$lib/components/OnBoarding.svelte';
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
-	import { redirect } from '@sveltejs/kit';
 
 	const i18n = getContext('i18n');
 
@@ -48,7 +46,7 @@
 			await config.set(await getBackendConfig());
 
 			if (!redirectPath) {
-				redirectPath = $page.url.searchParams.get('redirect') || '/';
+				redirectPath = $page.url.searchParams.get('redirectPath') || '/';
 			}
 
 			goto(redirectPath);
@@ -128,8 +126,6 @@
 		await setSessionUser(sessionUser, localStorage.getItem('redirectPath') || null);
 	};
 
-	let onboarding = false;
-
 	async function setLogoImage() {
 		await tick();
 		const logo = document.getElementById('logo');
@@ -174,11 +170,14 @@
 		loaded = true;
 		setLogoImage();
 
-		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
-			await signInHandler();
-		} else {
-			onboarding = $config?.onboarding ?? false;
+	if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
+		await signInHandler();
+	} else {
+		// Set mode to signup when onboarding would have been shown
+		if ($config?.onboarding) {
+			mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
 		}
+	}
 	});
 </script>
 
@@ -187,14 +186,6 @@
 		{`${$WEBUI_NAME}`}
 	</title>
 </svelte:head>
-
-<OnBoarding
-	bind:show={onboarding}
-	getStartedHandler={() => {
-		onboarding = false;
-		mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
-	}}
-/>
 
 <div class="w-full h-screen max-h-[100dvh] text-white relative" id="auth-page">
 	<div class="w-full h-full absolute top-0 left-0 bg-white dark:bg-black"></div>

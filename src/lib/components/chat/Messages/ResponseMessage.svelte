@@ -128,7 +128,7 @@
 	export let updateChat: Function;
 	export let editMessage: Function;
 	export let saveMessage: Function;
-	export let rateMessage: Function;
+	export const rateMessage: Function = () => {};
 	export let actionMessage: Function;
 	export let deleteMessage: Function;
 
@@ -576,6 +576,8 @@
 
 		await tick();
 		if (buttonsContainerElement) {
+			console.log(buttonsContainerElement);
+
 			buttonsContainerElement.addEventListener('wheel', function (event) {
 				if (buttonsContainerElement.scrollWidth <= buttonsContainerElement.clientWidth) {
 					// If the container is not scrollable, horizontal scroll
@@ -610,9 +612,7 @@
 		<div class={`shrink-0 ltr:mr-3 rtl:ml-3 hidden @lg:flex mt-1 `}>
 			<ProfileImage
 				src={model?.info?.meta?.profile_image_url ??
-					($i18n.language === 'dg-DG'
-						? `${WEBUI_BASE_URL}/doge.png`
-						: `${WEBUI_BASE_URL}/favicon.png`)}
+					`${WEBUI_BASE_URL}/favicon.png`}
 				className={'size-8 assistant-message-profile-image'}
 			/>
 		</div>
@@ -809,7 +809,6 @@
 										bind:this={citationsElement}
 										id={message?.id}
 										sources={message?.sources ?? message?.citations}
-										{readOnly}
 									/>
 								{/if}
 

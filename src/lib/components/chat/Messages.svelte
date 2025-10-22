@@ -29,7 +29,7 @@
 	export let chatId = '';
 	export let user = $_user;
 
-	export let prompt;
+	export const prompt = undefined;
 	export let history = {};
 	export let selectedModels;
 	export let atSelectedModel;

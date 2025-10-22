@@ -24,7 +24,7 @@
 	export let show = false;
 
 	export let title = 'Chats';
-	export let emptyPlaceholder = '';
+	export const emptyPlaceholder = '';
 	export let shareUrl = false;
 
 	export let query = '';

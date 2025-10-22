@@ -16,7 +16,7 @@
 	import Message from './Messages/Message.svelte';
 	import Loader from '../common/Loader.svelte';
 	import Spinner from '../common/Spinner.svelte';
-	import { addReaction, deleteMessage, removeReaction, updateMessage } from '$lib/apis/channels';
+	import { deleteMessage, updateMessage } from '$lib/apis/channels';
 
 	const i18n = getContext('i18n');
 
@@ -132,67 +132,6 @@
 				}}
 				onThread={(id) => {
 					onThread(id);
-				}}
-				onReaction={(name) => {
-					if (
-						(message?.reactions ?? [])
-							.find((reaction) => reaction.name === name)
-							?.user_ids?.includes($user?.id) ??
-						false
-					) {
-						messages = messages.map((m) => {
-							if (m.id === message.id) {
-								const reaction = m.reactions.find((reaction) => reaction.name === name);
-
-								if (reaction) {
-									reaction.user_ids = reaction.user_ids.filter((id) => id !== $user?.id);
-									reaction.count = reaction.user_ids.length;
-
-									if (reaction.count === 0) {
-										m.reactions = m.reactions.filter((r) => r.name !== name);
-									}
-								}
-							}
-							return m;
-						});
-
-						const res = removeReaction(
-							localStorage.token,
-							message.channel_id,
-							message.id,
-							name
-						).catch((error) => {
-							toast.error(`${error}`);
-							return null;
-						});
-					} else {
-						messages = messages.map((m) => {
-							if (m.id === message.id) {
-								if (m.reactions) {
-									const reaction = m.reactions.find((reaction) => reaction.name === name);
-
-									if (reaction) {
-										reaction.user_ids.push($user?.id);
-										reaction.count = reaction.user_ids.length;
-									} else {
-										m.reactions.push({
-											name: name,
-											user_ids: [$user?.id],
-											count: 1
-										});
-									}
-								}
-							}
-							return m;
-						});
-
-						const res = addReaction(localStorage.token, message.channel_id, message.id, name).catch(
-							(error) => {
-								toast.error(`${error}`);
-								return null;
-							}
-						);
-					}
 				}}
 			/>
 		{/each}
